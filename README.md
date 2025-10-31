@@ -3,6 +3,8 @@ Team project for Database Design course.
 
 - P1 doc: Team 9.pdf
 - DrawIO file for P2: Group9 - Project2.drawio
+- DrawIO file for P3: Group9 - Project3.drawio
+
 
 
 
