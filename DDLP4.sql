@@ -46,9 +46,9 @@ CREATE TABLE RESTAURANT (
    opening_date DATE NOT NULL,
    phone_number VARCHAR(20) NOT NULL,
    CONSTRAINT pk_restaurant PRIMARY KEY (RestaurantID),
-   -- CHECK constraint 1: Restaurant status must be one of specified values
+  
    CONSTRAINT chk_restaurant_status CHECK (status IN ('Active', 'Inactive', 'Temporarily Closed')),
-   -- CHECK constraint 2: Opening date cannot be in the future
+   
    CONSTRAINT chk_restaurant_opening_date CHECK (opening_date <= GETDATE())
 );
 -- customer Table
@@ -59,13 +59,10 @@ CREATE TABLE CUSTOMER (
    Street VARCHAR(30) ,
    City VARCHAR(20),
    [State] VARCHAR(20),
-   Zip INT,
+   zip_code VARCHAR(10) NOT NULL,
 
 
    CONSTRAINT pk_customer PRIMARY KEY (CustomerID),
-   -- CHECK constraint 3: Zip code must be 5 digits
-   CONSTRAINT chk_customer_zip CHECK (Zip BETWEEN 00000 AND 99999),
-   -- CHECK constraint 4: Email must contain @ symbol
    CONSTRAINT chk_customer_email CHECK (Email LIKE '%@%')
 );
 
@@ -76,7 +73,7 @@ CREATE TABLE MENUITEM (
    Price DECIMAL(10,2) NOT NULL,
    Category VARCHAR(100) NOT NULL,
    CONSTRAINT pk_menuitem PRIMARY KEY (MenuItemID),
-   -- CHECK constraint 5: Price must be greater than 0
+
    CONSTRAINT chk_menuitem_price CHECK (Price > 0)
 )
 
@@ -230,10 +227,9 @@ Create Table VENDOR (
    street_address VARCHAR(200) NOT NULL,
    city VARCHAR(50) NOT NULL,
    [state] VARCHAR(20) NOT NULL,
-   Zip INT,
+   zip_code VARCHAR(10) NOT NULL,
   
    CONSTRAINT PK_Vendor Primary key (vendor_id),
-   CONSTRAINT chk_vendor_zip CHECK (Zip BETWEEN 00000 AND 99999),
 );
 
 --need expense table--
