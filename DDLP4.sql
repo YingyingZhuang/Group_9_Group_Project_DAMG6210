@@ -135,23 +135,9 @@ CREATE TABLE ORDERITEM (
    -- CHECK constraint 11: Unit price must be greater than 0
    CONSTRAINT chk_orderitem_unitprice CHECK (UnitPrice > =0),
    -- Foreign key constraints
-   CONSTRAINT fk1_orderitem FOREIGN KEY (OrderID) REFERENCES [ORDER](OrderID)
-       ON UPDATE CASCADE,
+   CONSTRAINT fk1_orderitem FOREIGN KEY (OrderID) REFERENCES [ORDER](OrderID),
    CONSTRAINT fk2_orderitem FOREIGN KEY (MenuItemID) REFERENCES MENUITEM(MenuItemID)
-       ON UPDATE CASCADE
-)
-
-
-
-
-
-
-
-
-
-
-
-
+);
 
 
 --ingredient no fk, check for the reorder level>0--
@@ -165,7 +151,6 @@ Create Table INGREDIENT (
    CONSTRAINT PK_Ingredient Primary key (ingredient_id),
    CONSTRAINT CHK_Ingredient_Reorder_Level check (reorder_level >= 0)
 );
-
 
 
 --need menuitem and ingredient for FK,check quantity--
@@ -217,8 +202,6 @@ CREATE TABLE PAYROLL (
    FOREIGN KEY (employee_id) REFERENCES EMPLOYEES(Employee_ID)
 );
 
-
-
 --vendor no fk--
 Create Table VENDOR (
    vendor_id INT IDENTITY(1,1) NOT NULL,
@@ -234,7 +217,7 @@ Create Table VENDOR (
 
 --need expense table--
 --vendor expense use fk from vendor and expense--
-CREATE TABLE Vendor_Expense (
+CREATE TABLE VENDOR_EXPENSE (
    expense_id INT NOT NULL,
    vendor_id INT NOT NULL,
    [description] VARCHAR(500) NULL,
