@@ -4,8 +4,8 @@ Team project for Database Design course.
 - P1 doc: Team 9.pdf
 - DrawIO file for P2: Group9 - Project2.drawio
 - DrawIO file for P3: Group9 - Project3.drawio
--SQL DDL: DDLP4.sql
--SQL INSERT: INSERT_P4.sql
+- SQL DDL: DDLP4.sql
+- SQL INSERT: INSERT_P4.sql
 
 
 
@@ -17,5 +17,5 @@ Team project for Database Design course.
 
 - P3:[Database Design, Logical ERD](https://docs.google.com/document/d/1mEKsJy4UWtbvDu11ZOJ5nURv-00syftEpCgUzfwCMOE/edit?usp=sharing)
 
--P4: [Database Schema Implementation]
+- P4: [Database Schema Implementation]
 
