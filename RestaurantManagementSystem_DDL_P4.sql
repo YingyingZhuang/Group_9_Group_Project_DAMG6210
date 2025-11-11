@@ -6,7 +6,7 @@ GO
 
 
 Create database RestaurantManagementSystem
-
+go
 
 
 Use RestaurantManagementSystem
