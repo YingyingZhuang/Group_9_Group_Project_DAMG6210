@@ -549,5 +549,147 @@ SELECT Table_ID, Table_Number, [Status], Seating_Capacity
 FROM [TABLE] 
 WHERE Table_ID = 4;
 
-
+GO
 ----test end-----------
+
+
+-- Function 1: Calculate total revenue for a restaurant in a date range
+
+CREATE OR ALTER FUNCTION dbo.fn_CalculateRestaurantRevenue
+(
+    @RestaurantID INT,
+    @StartDate DATE,
+    @EndDate DATE
+)
+RETURNS DECIMAL(10,2)
+AS
+BEGIN
+    DECLARE @TotalRevenue DECIMAL(10,2);
+    
+    SELECT @TotalRevenue = SUM(Transaction_Amount + Tax + Tip)
+    FROM [ORDER]
+    WHERE RestaurantID = @RestaurantID
+        AND [Status] = 'Completed'
+        AND CAST(OrderDateTime AS DATE) BETWEEN @StartDate AND @EndDate;
+    
+    -- Return 0 if no orders found
+    RETURN ISNULL(@TotalRevenue, 0);
+END
+GO
+
+-- Test Scalar Function
+SELECT 
+    RestaurantID,
+    Restaurant_name,
+    dbo.fn_CalculateRestaurantRevenue(RestaurantID, '2025-11-01', '2025-11-30') AS NovemberRevenue
+FROM RESTAURANT
+WHERE RestaurantID IN (1, 2, 3, 5);
+GO
+
+-- Function 2: Get menu items and their ingredient availability
+CREATE OR ALTER FUNCTION dbo.fn_GetMenuItemIngredients
+(
+    @MenuItemID INT,
+    @RestaurantID INT
+)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        r.RestaurantID,
+        r.Restaurant_name,
+        m.MenuItemID,
+        m.[Name] AS MenuItemName,
+        m.Price,
+        i.ingredient_id,
+        i.[name] AS IngredientName,
+        mi.quantity_required AS QuantityNeeded,
+        ISNULL(inv.current_quantity, 0) AS CurrentStock,
+        i.unit,
+        CASE 
+            WHEN ISNULL(inv.current_quantity, 0) >= mi.quantity_required THEN 'Available'
+            WHEN ISNULL(inv.current_quantity, 0) > 0 THEN 'Low Stock'
+            ELSE 'Out of Stock'
+        END AS StockStatus
+    FROM MENUITEM m
+    INNER JOIN MENU_INGREDIENT mi ON m.MenuItemID = mi.MenuItemID
+    INNER JOIN INGREDIENT i ON mi.ingredient_id = i.ingredient_id
+    LEFT JOIN INVENTORY inv ON i.ingredient_id = inv.ingredient_id 
+        AND inv.RestaurantID = @RestaurantID
+    INNER JOIN RESTAURANT r ON r.RestaurantID = @RestaurantID
+    WHERE m.MenuItemID = @MenuItemID
+);
+GO
+
+-- Test Inline Table-Valued Function
+SELECT * FROM dbo.fn_GetMenuItemIngredients(1, 1);
+SELECT * FROM dbo.fn_GetMenuItemIngredients(6, 1);
+GO
+
+-- Function 3: Get low stock ingredients that need reordering
+CREATE OR ALTER FUNCTION dbo.fn_GetLowStockIngredients
+(
+    @RestaurantID INT
+)
+RETURNS @LowStockTable TABLE
+(
+    RestaurantID INT,
+    RestaurantName VARCHAR(100),
+    IngredientID INT,
+    IngredientName VARCHAR(100),
+    Category VARCHAR(50),
+    CurrentQuantity DECIMAL(10,2),
+    ReorderLevel DECIMAL(10,2),
+    Unit VARCHAR(20),
+    StockPercentage DECIMAL(5,2),
+    OrderPriority VARCHAR(20),
+    LastUpdated DATETIME
+)
+AS
+BEGIN
+    DECLARE @RestaurantName VARCHAR(100);
+    
+    -- Get restaurant name
+    SELECT @RestaurantName = Restaurant_name
+    FROM RESTAURANT
+    WHERE RestaurantID = @RestaurantID;
+    
+    -- Insert ingredients below reorder level
+    INSERT INTO @LowStockTable
+    SELECT 
+        @RestaurantID,
+        @RestaurantName,
+        i.ingredient_id,
+        i.[name],
+        i.category,
+        ISNULL(inv.current_quantity, 0) AS CurrentQuantity,
+        i.reorder_level,
+        i.unit,
+        CASE 
+            WHEN i.reorder_level > 0 
+            THEN ROUND((ISNULL(inv.current_quantity, 0) / i.reorder_level) * 100, 2)
+            ELSE 100.00
+        END AS StockPercentage,
+        CASE 
+            WHEN ISNULL(inv.current_quantity, 0) = 0 THEN 'URGENT'
+            WHEN ISNULL(inv.current_quantity, 0) < (i.reorder_level * 0.5) THEN 'High'
+            ELSE 'Medium'
+        END AS OrderPriority,
+        inv.last_updated
+    FROM INGREDIENT i
+    LEFT JOIN INVENTORY inv ON i.ingredient_id = inv.ingredient_id 
+        AND inv.RestaurantID = @RestaurantID
+    WHERE ISNULL(inv.current_quantity, 0) <= i.reorder_level;
+    
+    RETURN;
+END
+GO
+
+-- Test Multi-Statement Table-Valued Function
+SELECT * FROM dbo.fn_GetLowStockIngredients(1)
+ORDER BY OrderPriority DESC, StockPercentage ASC;
+
+SELECT * FROM dbo.fn_GetLowStockIngredients(2)
+ORDER BY OrderPriority DESC;
+GO
