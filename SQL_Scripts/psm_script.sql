@@ -693,3 +693,145 @@ ORDER BY OrderPriority DESC, StockPercentage ASC;
 SELECT * FROM dbo.fn_GetLowStockIngredients(2)
 ORDER BY OrderPriority DESC;
 GO
+
+-- ==========================================
+-- VIEW 1: Restaurant Sales Summary
+-- ==========================================
+-- Purpose: Provides a comprehensive sales overview for each restaurant
+-- Use Cases: Management reporting, performance comparison, revenue tracking
+
+DROP VIEW IF EXISTS vw_RestaurantSalesSummary;
+GO
+
+CREATE VIEW vw_RestaurantSalesSummary
+AS
+SELECT 
+    r.RestaurantID,
+    r.Restaurant_name,
+    r.city,
+    r.[state],
+    r.[status],
+    COUNT(DISTINCT o.OrderID) AS TotalOrders,
+    COUNT(DISTINCT CASE WHEN o.[Status] = 'Completed' THEN o.OrderID END) AS CompletedOrders,
+    COUNT(DISTINCT CASE WHEN o.[Status] = 'Pending' THEN o.OrderID END) AS PendingOrders,
+    COUNT(DISTINCT CASE WHEN o.[Status] = 'Cancelled' THEN o.OrderID END) AS CancelledOrders,
+    ISNULL(SUM(CASE WHEN o.[Status] = 'Completed' THEN o.Transaction_Amount ELSE 0 END), 0) AS TotalRevenue,
+    ISNULL(SUM(CASE WHEN o.[Status] = 'Completed' THEN o.Tax ELSE 0 END), 0) AS TotalTax,
+    ISNULL(SUM(CASE WHEN o.[Status] = 'Completed' THEN o.Tip ELSE 0 END), 0) AS TotalTips,
+    ISNULL(SUM(CASE WHEN o.[Status] = 'Completed' THEN (o.Transaction_Amount + o.Tax + o.Tip) ELSE 0 END), 0) AS TotalGrossRevenue,
+    CASE 
+        WHEN COUNT(DISTINCT o.OrderID) > 0 
+        THEN ISNULL(SUM(CASE WHEN o.[Status] = 'Completed' THEN (o.Transaction_Amount + o.Tax + o.Tip) ELSE 0 END), 0) / COUNT(DISTINCT CASE WHEN o.[Status] = 'Completed' THEN o.OrderID END)
+        ELSE 0 
+    END AS AverageOrderValue,
+    COUNT(DISTINCT o.CustomerID) AS UniqueCustomers
+FROM RESTAURANT r
+LEFT JOIN [ORDER] o ON r.RestaurantID = o.RestaurantID
+GROUP BY r.RestaurantID, r.Restaurant_name, r.city, r.[state], r.[status];
+GO
+
+-- Test View 1
+SELECT * FROM vw_RestaurantSalesSummary
+ORDER BY TotalGrossRevenue DESC;
+GO
+
+
+-- ==========================================
+-- VIEW 2: Inventory Status Report
+-- ==========================================
+-- Purpose: Shows current inventory levels and identifies items needing reorder
+-- Use Cases: Inventory management, purchase order generation, stock monitoring
+
+DROP VIEW IF EXISTS vw_InventoryStatusReport;
+GO
+
+CREATE VIEW vw_InventoryStatusReport
+AS
+SELECT 
+    r.RestaurantID,
+    r.Restaurant_name,
+    r.city,
+    i.ingredient_id,
+    i.[name] AS IngredientName,
+    i.category AS IngredientCategory,
+    i.unit,
+    ISNULL(inv.current_quantity, 0) AS CurrentQuantity,
+    i.reorder_level AS ReorderLevel,
+    CASE 
+        WHEN i.reorder_level > 0 
+        THEN ROUND((ISNULL(inv.current_quantity, 0) / i.reorder_level) * 100, 2)
+        ELSE 100.00
+    END AS StockPercentage,
+    CASE 
+        WHEN ISNULL(inv.current_quantity, 0) = 0 THEN 'OUT OF STOCK'
+        WHEN ISNULL(inv.current_quantity, 0) < (i.reorder_level * 0.5) THEN 'CRITICAL'
+        WHEN ISNULL(inv.current_quantity, 0) <= i.reorder_level THEN 'LOW'
+        ELSE 'SUFFICIENT'
+    END AS StockStatus,
+    CASE 
+        WHEN ISNULL(inv.current_quantity, 0) = 0 THEN 1
+        WHEN ISNULL(inv.current_quantity, 0) < (i.reorder_level * 0.5) THEN 2
+        WHEN ISNULL(inv.current_quantity, 0) <= i.reorder_level THEN 3
+        ELSE 4
+    END AS PriorityOrder,
+    inv.last_updated AS LastUpdated
+FROM RESTAURANT r
+CROSS JOIN INGREDIENT i
+LEFT JOIN INVENTORY inv ON r.RestaurantID = inv.RestaurantID 
+    AND i.ingredient_id = inv.ingredient_id
+WHERE r.[status] = 'Active';
+GO
+
+-- Test View 2
+SELECT * FROM vw_InventoryStatusReport
+WHERE StockStatus IN ('OUT OF STOCK', 'CRITICAL', 'LOW')
+ORDER BY RestaurantID, PriorityOrder;
+GO
+
+
+-- ==========================================
+-- VIEW 3: Menu Item Performance Analysis
+-- ==========================================
+-- Purpose: Analyzes menu item popularity and revenue contribution
+-- Use Cases: Menu optimization, pricing strategy, inventory planning
+
+DROP VIEW IF EXISTS vw_MenuItemPerformance;
+GO
+
+CREATE VIEW vw_MenuItemPerformance
+AS
+SELECT 
+    m.MenuItemID,
+    m.[Name] AS MenuItemName,
+    m.Category,
+    m.Price AS MenuPrice,
+    COUNT(DISTINCT oi.OrderID) AS TimesOrdered,
+    SUM(oi.Quantity) AS TotalQuantitySold,
+    SUM(oi.Quantity * oi.UnitPrice) AS TotalRevenue,
+    AVG(oi.UnitPrice) AS AverageSellingPrice,
+    COUNT(DISTINCT o.RestaurantID) AS RestaurantsServed,
+    MIN(o.OrderDateTime) AS FirstOrderDate,
+    MAX(o.OrderDateTime) AS LastOrderDate,
+    CASE 
+        WHEN SUM(oi.Quantity) >= 20 THEN 'High Demand'
+        WHEN SUM(oi.Quantity) >= 10 THEN 'Medium Demand'
+        WHEN SUM(oi.Quantity) >= 5 THEN 'Low Demand'
+        ELSE 'Very Low Demand'
+    END AS DemandLevel,
+    DENSE_RANK() OVER (ORDER BY SUM(oi.Quantity * oi.UnitPrice) DESC) AS RevenueRank,
+    DENSE_RANK() OVER (PARTITION BY m.Category ORDER BY SUM(oi.Quantity) DESC) AS CategoryPopularityRank
+FROM MENUITEM m
+LEFT JOIN ORDERITEM oi ON m.MenuItemID = oi.MenuItemID
+LEFT JOIN [ORDER] o ON oi.OrderID = o.OrderID AND o.[Status] = 'Completed'
+GROUP BY m.MenuItemID, m.[Name], m.Category, m.Price;
+GO
+
+-- Test View 3
+SELECT * FROM vw_MenuItemPerformance
+ORDER BY TotalRevenue DESC;
+
+-- Popular items by category
+SELECT * FROM vw_MenuItemPerformance
+WHERE CategoryPopularityRank <= 3
+ORDER BY Category, CategoryPopularityRank;
+GO
