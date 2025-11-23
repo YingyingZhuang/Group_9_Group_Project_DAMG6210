@@ -1,7 +1,36 @@
+# Python
+*.py[cod]
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
 
-###macOS###
-.DS_Store
-.AppleDouble
-.LSOverride
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+media/
 
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables
+.env
+
+# Database
+*.db
+
+# OS
 .DS_Store
+Thumbs.db
