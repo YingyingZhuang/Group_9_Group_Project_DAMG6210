@@ -74,6 +74,7 @@ Before running this application, ensure you have:
 ## Installation Steps
 
 ### 1. Clone or Download the Project
+folder on your choose
 ```bash
 cd D:\restaurant_crud
 ```
