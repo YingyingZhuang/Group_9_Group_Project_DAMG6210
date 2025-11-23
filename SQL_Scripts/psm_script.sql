@@ -835,3 +835,48 @@ SELECT * FROM vw_MenuItemPerformance
 WHERE CategoryPopularityRank <= 3
 ORDER BY Category, CategoryPopularityRank;
 GO
+
+-- Create or modify the trigger: Prevent the deletion of customers who have placed previous orders
+CREATE OR ALTER TRIGGER trg_PreventCustomerDeletion
+ON CUSTOMER
+INSTEAD OF DELETE  -- 'INSTEAD OF' trigger, which takes over the operation before executing DELETE
+AS
+BEGIN
+    -- 1. Check whether the customer to be deleted has any records in the [ORDER] table
+    IF EXISTS (
+        SELECT 1 
+        FROM [ORDER] o
+        INNER JOIN deleted d ON o.CustomerID = d.CustomerID
+    )
+    BEGIN
+        -- 2. Check whether the customer to be deleted has any records in the [ORDER] table. If there are order records, throw an error and roll back .
+        -- 16 represents the error level, and 1 is the status code.
+        RAISERROR ('Business Rule Violation: Cannot delete customer with existing order history. Deletion is blocked.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END
+    ELSE
+    BEGIN
+        -- 3.If there is no order record, then execute the native DELETE operation
+        DELETE FROM CUSTOMER
+        WHERE CustomerID IN (SELECT CustomerID FROM deleted);
+    END
+END;
+GO
+
+-- Attempt to delete customers who have orders (it should fail and give an error message)
+DELETE FROM CUSTOMER WHERE CustomerID = 1; 
+GO
+
+-- Insert a new customer (with no order)
+INSERT INTO CUSTOMER (Phone, Email, Street, City, [State], zip_code)
+VALUES ('617-555-9999', 'noorder@email.com', '123 Test St', 'Boston', 'MA', '02101');
+GO
+
+-- Delete the latest inserted customer (assuming its ID is SCOPE_IDENTITY(), which is 11)
+DELETE FROM CUSTOMER WHERE CustomerID = SCOPE_IDENTITY();
+GO
+
+--  Check the CUSTOMER table to see if the customer has been removed
+SELECT * FROM CUSTOMER WHERE Email = 'noorder@email.com';
+GO

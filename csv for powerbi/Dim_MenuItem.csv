@@ -1,0 +1,16 @@
+MenuItemID,Name,Price,Category
+1,Classic Burger,12.99,Main Course
+2,Grilled Chicken Salad,11.49,Salad
+3,Margherita Pizza,14.99,Main Course
+4,Caesar Salad,9.99,Salad
+5,Spaghetti Carbonara,13.99,Pasta
+6,Grilled Salmon,18.99,Seafood
+7,Fish and Chips,15.49,Seafood
+8,Vegetable Stir Fry,10.99,Vegetarian
+9,Chicken Wings,8.99,Appetizer
+10,French Fries,4.99,Side
+11,Onion Rings,5.99,Side
+12,Chocolate Cake,6.99,Dessert
+13,Ice Cream Sundae,5.49,Dessert
+14,Coca Cola,2.99,Beverage
+15,Iced Tea,2.49,Beverage

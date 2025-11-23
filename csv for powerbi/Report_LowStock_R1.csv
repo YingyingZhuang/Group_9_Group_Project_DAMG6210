@@ -1,0 +1,9 @@
+RestaurantID,RestaurantName,IngredientID,IngredientName,Category,CurrentQuantity,ReorderLevel,Unit,StockPercentage,OrderPriority,LastUpdated
+1,Boston Downtown Diner,4,Shrimp,Seafood,0.00,25.00,kg,0.00,URGENT,NULL
+1,Boston Downtown Diner,8,Potatoes,Vegetable,0.00,100.00,kg,0.00,URGENT,NULL
+1,Boston Downtown Diner,9,Olive Oil,Oil,0.00,15.00,liter,0.00,URGENT,NULL
+1,Boston Downtown Diner,11,White Rice,Dry Goods,0.00,60.00,kg,0.00,URGENT,NULL
+1,Boston Downtown Diner,12,Eggs,Dairy,0.00,30.00,dozen,0.00,URGENT,NULL
+1,Boston Downtown Diner,13,Cheddar Cheese,Dairy,0.00,20.00,kg,0.00,URGENT,NULL
+1,Boston Downtown Diner,14,Butter,Dairy,0.00,25.00,kg,0.00,URGENT,NULL
+1,Boston Downtown Diner,15,Salt,NULL,0.00,10.00,kg,0.00,URGENT,NULL
