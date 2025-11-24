@@ -836,6 +836,7 @@ WHERE CategoryPopularityRank <= 3
 ORDER BY Category, CategoryPopularityRank;
 GO
 
+-- triggers---
 -- Create or modify the trigger: Prevent the deletion of customers who have placed previous orders
 CREATE OR ALTER TRIGGER trg_PreventCustomerDeletion
 ON CUSTOMER
@@ -879,4 +880,28 @@ GO
 
 --  Check the CUSTOMER table to see if the customer has been removed
 SELECT * FROM CUSTOMER WHERE Email = 'noorder@email.com';
+GO
+
+-- trigger 2: Automated Inventory Reduction
+CREATE OR ALTER TRIGGER trg_AutoDecrementInventory
+ON ORDERITEM
+AFTER INSERT
+AS
+BEGIN
+
+    SET NOCOUNT ON;
+
+    -- check if there is sufficient inventory in the INVENTORY table
+    UPDATE inv
+    SET current_quantity = inv.current_quantity - (i.Quantity * mi.quantity_required),
+        last_updated = GETDATE()
+    FROM INVENTORY inv
+    INNER JOIN INGREDIENT ing ON inv.ingredient_id = ing.ingredient_id
+    INNER JOIN MENU_INGREDIENT mi ON ing.ingredient_id = mi.ingredient_id
+    INNER JOIN inserted i ON mi.MenuItemID = i.MenuItemID
+    INNER JOIN [ORDER] o ON i.OrderID = o.OrderID 
+    WHERE inv.ingredient_id = mi.ingredient_id 
+      AND inv.RestaurantID = o.RestaurantID; 
+
+END
 GO
