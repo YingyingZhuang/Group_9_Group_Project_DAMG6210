@@ -1,7 +1,7 @@
 USE RestaurantManagementSystem;
 GO
 
--- create index if it does not already exist
+
 -- Restaurant name index
 IF NOT EXISTS (SELECT 1 FROM sys.indexes i WHERE i.name = 'idx_restaurant_name' AND i.object_id = OBJECT_ID('dbo.RESTAURANT'))
 BEGIN
@@ -9,10 +9,17 @@ BEGIN
 END
 GO
 
--- Customer ID index
-IF NOT EXISTS (SELECT 1 FROM sys.indexes i WHERE i.name = 'idx_customer_id' AND i.object_id = OBJECT_ID('dbo.Customer'))
+-- Customer email 
+IF NOT EXISTS (SELECT 1 FROM sys.indexes i WHERE i.name = 'idx_customer_email' AND i.object_id = OBJECT_ID('dbo.Customer'))
 BEGIN
-    CREATE NONCLUSTERED INDEX idx_customer_id ON dbo.Customer (CustomerID);
+    CREATE NONCLUSTERED INDEX idx_customer_email ON dbo.Customer (Email);
+END
+GO
+
+-- customer phone number
+IF NOT EXISTS (SELECT 1 FROM sys.indexes i WHERE i.name = 'idx_customer_phone' AND i.object_id = OBJECT_ID('dbo.Customer'))
+BEGIN
+    CREATE NONCLUSTERED INDEX idx_customer_phone ON dbo.Customer (Phone);
 END
 GO
 
@@ -37,10 +44,10 @@ BEGIN
 END
 GO
 
--- Inventory ingredient_id index
-IF NOT EXISTS (SELECT 1 FROM sys.indexes i WHERE i.name = 'idx_inventory_ingredientid' AND i.object_id = OBJECT_ID('dbo.INVENTORY'))
+-- Ingredient category index
+IF NOT EXISTS (SELECT 1 FROM sys.indexes i WHERE i.name = 'idx_ingredient_category' AND i.object_id = OBJECT_ID('dbo.INGREDIENT'))
 BEGIN
-    CREATE NONCLUSTERED INDEX idx_inventory_ingredientid ON dbo.INVENTORY (ingredient_id);
+    CREATE NONCLUSTERED INDEX idx_ingredient_category ON dbo.INGREDIENT (category);
 END
 GO
 
@@ -51,9 +58,3 @@ BEGIN
 END
 GO
 
--- OrderItem OrderID index
-IF NOT EXISTS (SELECT 1 FROM sys.indexes i WHERE i.name = 'idx_orderitem_orderid' AND i.object_id = OBJECT_ID('dbo.ORDERITEM'))
-BEGIN
-    CREATE NONCLUSTERED INDEX idx_orderitem_orderid ON dbo.ORDERITEM (OrderID);
-END
-GO
