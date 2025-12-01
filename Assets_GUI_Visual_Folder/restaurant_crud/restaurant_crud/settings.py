@@ -55,8 +55,7 @@ ROOT_URLCONF = 'restaurant_crud.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -78,12 +77,13 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'RestaurantManagementSystem',
-        'USER': 'sa',
-        'PASSWORD': 'djb020709',
+        'USER': 'SA',
+        'PASSWORD': 'YourSTRONGPassword123',
         'HOST': 'localhost',
         'PORT': '',
         'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
+            'driver': 'ODBC Driver 18 for SQL Server',
+            'extra_params': 'Encrypt=yes;TrustServerCertificate=yes;'
         },
     },
 }

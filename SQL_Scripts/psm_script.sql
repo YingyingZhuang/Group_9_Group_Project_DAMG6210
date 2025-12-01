@@ -905,3 +905,40 @@ BEGIN
 
 END
 GO
+
+-- Close symmetric key when done
+CLOSE SYMMETRIC KEY RestaurantSymmetricKey;
+GO
+
+-- Auto encryption trigger.
+-- Trigger to automatically encrypt email, phone, street on INSERT/UPDATE
+IF OBJECT_ID('dbo.trg_CUSTOMER_EncryptSensitiveData', 'TR') IS NOT NULL
+    DROP TRIGGER dbo.trg_CUSTOMER_EncryptSensitiveData;
+GO
+
+CREATE TRIGGER dbo.trg_CUSTOMER_EncryptSensitiveData
+ON dbo.CUSTOMER
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Open the symmetric key for encryption
+    OPEN SYMMETRIC KEY RestaurantSymmetricKey
+    DECRYPTION BY CERTIFICATE RestaurantDataCertificate;
+
+    -- Encrypt plaintext columns into encrypted columns
+    UPDATE CUSTOMER
+    SET
+        encrypted_Email = EncryptByKey(Key_GUID('RestaurantSymmetricKey'), Email),
+        encrypted_Phone = EncryptByKey(Key_GUID('RestaurantSymmetricKey'), Phone),
+        encrypted_Street = EncryptByKey(Key_GUID('RestaurantSymmetricKey'), Street)
+    WHERE CustomerID IN (SELECT CustomerID FROM inserted);
+
+    -- Close the symmetric key
+    CLOSE SYMMETRIC KEY RestaurantSymmetricKey;
+END;
+GO
+
+PRINT 'Trigger trg_CUSTOMER_EncryptSensitiveData created successfully.';
+GO
